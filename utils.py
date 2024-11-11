@@ -2,8 +2,42 @@
 # ║║║├┤ │││├┴┐│ │  ║  │ │
 # ╚╩╝└─┘┘└┘└─┘└─┘  ╩═╝└─┘
 
+import cv2
 import matplotlib.pyplot as plt
+import torch
 from IPython import display
+
+
+def to_tensor_preprocess_frames(frames, device="cpu"):
+    """
+    Preprocesses a list of frames by converting each frame to grayscale, resizing it to 84x84,
+    and converting it to a PyTorch tensor.
+
+    Parameters:
+    - frames: A list of input frames in RGB format.
+
+    Returns:
+    - A list of preprocessed frames as PyTorch tensors.
+    """
+    preprocessed_tensor_frames = [
+        torch.tensor(preprocess_frame(frame), device=device, dtype=torch.float32) for frame in frames
+    ]
+    return preprocessed_tensor_frames
+
+
+def preprocess_frame(frame):
+    """
+    Preprocesses a given frame by converting it to grayscale and resizing it to 84x84.
+
+    Parameters:
+    - frame: The input frame in RGB format.
+
+    Returns:
+    - The preprocessed frame in grayscale and resized to 84x84.
+    """
+    frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+    frame = cv2.resize(frame, (84, 84))
+    return frame
 
 
 def play_and_render_episode(env, agent):
@@ -46,7 +80,7 @@ def play_and_render_episode(env, agent):
         total_reward += reward  # Accumulate the total reward
 
     fig, ax = plt.subplots()
-    img = ax.imshow(frames[0]) 
+    img = ax.imshow(frames[0])
     ax.axis("off")
 
     text = ax.text(

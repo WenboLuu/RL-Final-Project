@@ -1,5 +1,4 @@
 import torch.nn as nn
-import torch.nn.functional as F
 
 class DQN(nn.Module):
     def __init__(self, input_shape, n_actions):
@@ -29,7 +28,7 @@ class DQN(nn.Module):
         return size
 
     def forward(self, x):
-        x = x / 255.0  # Normalize pixel values
+        x = x / 255.0  # Normalize pixel values to [0, 1]
         x = self.conv(x)
         x = x.view(x.size(0), -1)
         return self.fc(x)

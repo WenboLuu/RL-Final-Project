@@ -29,18 +29,13 @@ class DDQNAgent:
         if random.random() > epsilon:
             with torch.no_grad():
                 q_values = self.policy_net(state)
-                action = q_values.max(1)[1].cpu().numpy()
+                action = q_values.max(1)[1]
         else:
-            action = np.random.randint(0, self.n_actions, size=state.shape[0])
+            action = torch.tensor(np.random.randint(0, self.n_actions, size=state.shape[0]), device=self.device)
         return action
 
     def update(self):
         states, actions, rewards, next_states, dones = self.replay_buffer.sample(self.batch_size)
-        # states = torch.FloatTensor(states).to(self.device)
-        # actions = torch.LongTensor(actions).to(self.device)
-        # rewards = torch.FloatTensor(rewards).to(self.device)
-        # next_states = torch.FloatTensor(next_states).to(self.device)
-        # dones = torch.FloatTensor(dones).to(self.device)
 
         q_values = self.policy_net(states).gather(1, actions.unsqueeze(1)).squeeze(1)
         with torch.no_grad():

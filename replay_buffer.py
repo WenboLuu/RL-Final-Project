@@ -33,10 +33,10 @@ class ReplayBuffer:
 
     def sample(self, batch_size):
         idxs = np.random.choice(self.size, batch_size, replace=False)
-        states = self.states[idxs].float() / 255.0
+        states = self.states[idxs]
         actions = self.actions[idxs]
         rewards = self.rewards[idxs]
-        next_states = self.next_states[idxs].float() / 255.0
+        next_states = self.next_states[idxs]
         dones = self.dones[idxs]
         return states, actions, rewards, next_states, dones
 

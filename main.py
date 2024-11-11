@@ -5,6 +5,7 @@ from torch.utils.tensorboard import SummaryWriter
 from agent import DDQNAgent
 from utils import to_tensor_preprocess_frames
 from tqdm import tqdm
+import multiprocessing
 
 # Register ALE (Atari Learning Environment) environments
 gym.register_envs(ale_py)
@@ -13,23 +14,25 @@ gym.register_envs(ale_py)
 # ENV_NAME = "ALE/BattleZone-v5"
 ENV_NAME = "ALE/DemonAttack-v5"
 MAX_EPISODE_STEPS = 1_000
-NUM_ENVS = 4
-NUM_EPISODES = 5_000
+NUM_ENVS = 8
+NUM_EPISODES = 1_000
 BATCH_SIZE = 32
 LEARNING_RATE = 1e-4
 GAMMA = 0.99
-TARGET_UPDATE_FREQ = 10_000
+TARGET_UPDATE_FREQ = 5_000
 MEMORY_SIZE = 200_000
 MIN_REPLAY_SIZE = 1000
 EPS_START = 1.0
 EPS_END = 0.1
-EPS_DECAY = 1e-5
+EPS_DECAY = (EPS_START - EPS_END) / (NUM_EPISODES * MAX_EPISODE_STEPS)
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-FRAME_WINDOW = 1
 FRAME_SKIP = 4
 
 
 def main():
+    # Set multiprocessing start method to 'spawn'
+    multiprocessing.set_start_method('spawn')
+
     # Create vectorized environments
     envs = gym.vector.AsyncVectorEnv(
         [
@@ -41,7 +44,7 @@ def main():
     action_space = envs.single_action_space.n
 
     agent = DDQNAgent(
-        state_shape=(FRAME_WINDOW, 84, 84),
+        state_shape=(1, 84, 84),
         n_actions=action_space,
         batch_size=BATCH_SIZE,
         lr=LEARNING_RATE,
@@ -58,7 +61,7 @@ def main():
     # Initialize replay memory
     init_states = envs.reset(seed=42)[0]
     init_frames = to_tensor_preprocess_frames(init_states, device=DEVICE)
-    state_stack = torch.stack(init_frames).unsqueeze(dim=1).repeat(1, FRAME_WINDOW, 1, 1)
+    state_stack = torch.stack(init_frames).unsqueeze(1)
 
     episode_count = 0  # Initialize episode counter
     episode_reward = torch.zeros(NUM_ENVS, device=DEVICE)
@@ -74,8 +77,7 @@ def main():
 
         # Preprocess frames
         next_frames = to_tensor_preprocess_frames(next_states, device=DEVICE)
-        next_state_stack = torch.roll(state_stack, shifts=-1, dims=1)
-        next_state_stack[:, -1, :, :] = torch.stack(next_frames)
+        next_state_stack = torch.stack(next_frames).unsqueeze(1)
 
         # Store transitions in replay buffer without for loop
         agent.replay_buffer.push(

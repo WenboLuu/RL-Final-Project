@@ -6,6 +6,7 @@ import cv2
 import matplotlib.pyplot as plt
 import torch
 from IPython import display
+from constants import DTYPE_STATE
 
 
 def to_tensor_preprocess_frames(frames, device="cpu"):
@@ -20,7 +21,7 @@ def to_tensor_preprocess_frames(frames, device="cpu"):
     - A list of preprocessed frames as PyTorch tensors.
     """
     preprocessed_tensor_frames = [
-        torch.tensor(preprocess_frame(frame), device=device, dtype=torch.float32) for frame in frames
+        torch.tensor(preprocess_frame(frame), device=device, dtype=DTYPE_STATE) for frame in frames
     ]
     return preprocessed_tensor_frames
 

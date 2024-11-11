@@ -77,15 +77,14 @@ def main():
         next_state_stack = torch.roll(state_stack, shifts=-1, dims=1)
         next_state_stack[:, -1, :, :] = torch.stack(next_frames)
 
-        # Store transitions in replay buffer
-        for idx in range(NUM_ENVS):
-            agent.replay_buffer.push(
-                state_stack[idx].cpu().numpy(),
-                actions[idx],
-                rewards[idx],
-                next_state_stack[idx].cpu().numpy(),
-                dones[idx],
-            )
+        # Store transitions in replay buffer without for loop
+        agent.replay_buffer.push(
+            state_stack,
+            actions,
+            rewards,
+            next_state_stack,
+            dones
+        )
 
         state_stack = next_state_stack
         episode_reward += torch.tensor(rewards, device=DEVICE)

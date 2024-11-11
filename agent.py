@@ -6,18 +6,9 @@ import numpy as np
 from models import DQN
 from replay_buffer import ReplayBuffer
 
+
 class DDQNAgent:
-    def __init__(
-        self,
-        state_shape,
-        n_actions,
-        batch_size,
-        lr,
-        gamma,
-        target_update_freq,
-        memory_size,
-        device,
-    ):
+    def __init__(self, state_shape, n_actions, batch_size, lr, gamma, target_update_freq, memory_size, device):
         self.n_actions = n_actions
         self.batch_size = batch_size
         self.gamma = gamma
@@ -29,7 +20,7 @@ class DDQNAgent:
         self.target_net.eval()
 
         self.optimizer = optim.Adam(self.policy_net.parameters(), lr=lr)
-        self.replay_buffer = ReplayBuffer(memory_size)
+        self.replay_buffer = ReplayBuffer(memory_size, state_shape, device)
 
         self.update_count = 0
         self.target_update_freq = target_update_freq
@@ -45,11 +36,11 @@ class DDQNAgent:
 
     def update(self):
         states, actions, rewards, next_states, dones = self.replay_buffer.sample(self.batch_size)
-        states = torch.FloatTensor(states).to(self.device)
-        actions = torch.LongTensor(actions).to(self.device)
-        rewards = torch.FloatTensor(rewards).to(self.device)
-        next_states = torch.FloatTensor(next_states).to(self.device)
-        dones = torch.FloatTensor(dones).to(self.device)
+        # states = torch.FloatTensor(states).to(self.device)
+        # actions = torch.LongTensor(actions).to(self.device)
+        # rewards = torch.FloatTensor(rewards).to(self.device)
+        # next_states = torch.FloatTensor(next_states).to(self.device)
+        # dones = torch.FloatTensor(dones).to(self.device)
 
         q_values = self.policy_net(states).gather(1, actions.unsqueeze(1)).squeeze(1)
         with torch.no_grad():

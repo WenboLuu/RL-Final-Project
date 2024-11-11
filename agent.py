@@ -30,9 +30,9 @@ class DDQNAgent:
         if random.random() > epsilon:
             with torch.no_grad():
                 q_values = self.policy_net(state)
-                action = q_values.max(1)[1]
+                action = q_values.max(1)[1].cpu().numpy()
         else:
-            action = torch.tensor(np.random.randint(0, self.n_actions, size=state.shape[0]), device=self.device, dtype=DTYPE_ACTION)
+            action = np.random.randint(0, self.n_actions, size=state.shape[0])
         return action
 
     def update(self):

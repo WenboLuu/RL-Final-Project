@@ -14,7 +14,7 @@ gym.register_envs(ale_py)
 # ENV_NAME = "ALE/BattleZone-v5"
 ENV_NAME = "ALE/DemonAttack-v5"
 MAX_EPISODE_STEPS = 1_000
-NUM_ENVS = 4
+NUM_ENVS = 16
 NUM_EPISODES = 1_000
 BATCH_SIZE = 32
 LEARNING_RATE = 1e-4
@@ -36,7 +36,7 @@ def main():
     # Create vectorized environments
     envs = gym.vector.AsyncVectorEnv(
         [
-            lambda: gym.make(ENV_NAME, max_episode_steps=MAX_EPISODE_STEPS, render_mode="rgb_array")
+            lambda: gym.make(ENV_NAME, max_episode_steps=MAX_EPISODE_STEPS, frameskip=FRAME_SKIP)
             for _ in range(NUM_ENVS)
         ]
     )

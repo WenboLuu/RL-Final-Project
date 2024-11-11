@@ -15,6 +15,7 @@ class ReplayBuffer:
         self.size = 0
 
     def push(self, states, actions, rewards, next_states, dones):
+        actions = torch.tensor(actions, dtype=DTYPE_ACTION, device=self.device)
         rewards = torch.tensor(rewards, dtype=DTYPE_REWARD, device=self.device)
         dones = torch.tensor(dones, dtype=DTYPE_DONE, device=self.device)
         

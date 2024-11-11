@@ -5,7 +5,7 @@ from torch.utils.tensorboard import SummaryWriter
 from agent import DDQNAgent
 from utils import to_tensor_preprocess_frames
 from tqdm import tqdm
-import multiprocessing
+# import multiprocessing
 
 # Register ALE (Atari Learning Environment) environments
 gym.register_envs(ale_py)
@@ -14,7 +14,7 @@ gym.register_envs(ale_py)
 # ENV_NAME = "ALE/BattleZone-v5"
 ENV_NAME = "ALE/DemonAttack-v5"
 MAX_EPISODE_STEPS = 1_000
-NUM_ENVS = 8
+NUM_ENVS = 4
 NUM_EPISODES = 1_000
 BATCH_SIZE = 32
 LEARNING_RATE = 1e-4
@@ -31,7 +31,7 @@ FRAME_SKIP = 4
 
 def main():
     # Set multiprocessing start method to 'spawn'
-    multiprocessing.set_start_method('spawn')
+    # multiprocessing.set_start_method('spawn')
 
     # Create vectorized environments
     envs = gym.vector.AsyncVectorEnv(

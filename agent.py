@@ -5,6 +5,7 @@ import random
 import numpy as np
 from models import DQN
 from replay_buffer import ReplayBuffer
+from constants import DTYPE_ACTION
 
 
 class DDQNAgent:
@@ -31,7 +32,7 @@ class DDQNAgent:
                 q_values = self.policy_net(state)
                 action = q_values.max(1)[1]
         else:
-            action = torch.tensor(np.random.randint(0, self.n_actions, size=state.shape[0]), device=self.device)
+            action = torch.tensor(np.random.randint(0, self.n_actions, size=state.shape[0]), device=self.device, dtype=DTYPE_ACTION)
         return action
 
     def update(self):

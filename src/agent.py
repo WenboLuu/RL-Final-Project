@@ -52,5 +52,7 @@ class DDQNAgent:
 
         self.update_count += 1
 
+        return loss.item()  # Return the loss value
+
     def update_target_network(self):
         self.target_net.load_state_dict(self.policy_net.state_dict())

@@ -1,7 +1,3 @@
-# ╦ ╦┌─┐┌┐┌┌┐ ┌─┐  ╦  ┬ ┬
-# ║║║├┤ │││├┴┐│ │  ║  │ │
-# ╚╩╝└─┘┘└┘└─┘└─┘  ╩═╝└─┘
-
 import cv2
 import matplotlib.pyplot as plt
 import torch
@@ -105,3 +101,37 @@ def play_and_render_episode(env, agent):
 
     print(f"Total Reward: {total_reward}")
     env.close()
+
+
+def evaluate_agent(env, agent, num_episodes=5, epsilon=0.05, device="cpu"):
+    """
+    Evaluates the agent over a specified number of episodes.
+    """
+    total_rewards = []
+
+    for _ in range(num_episodes):
+        state, _ = env.reset()
+        terminated = truncated = False
+        total_reward = 0
+
+        # Preprocess initial state
+        state_frame = to_tensor_preprocess_frames([state], device=device)[0]  # Shape: [84, 84]
+        state_stack = state_frame.unsqueeze(0).unsqueeze(0)  # Shape: [1, 1, 84, 84]
+
+        while not terminated and not truncated:
+            # Agent selects an action
+            action = agent.select_action(state_stack, epsilon)
+            action = action.item()  # Convert action array to scalar
+
+            # Environment step
+            next_state, reward, terminated, truncated, _ = env.step(action)
+            total_reward += reward
+
+            # Preprocess next state
+            next_state_frame = to_tensor_preprocess_frames([next_state], device=device)[0]
+            state_stack = next_state_frame.unsqueeze(0).unsqueeze(0)  # Shape: [1, 1, 84, 84]
+
+        total_rewards.append(total_reward)
+
+    average_reward = sum(total_rewards) / num_episodes
+    return average_reward

@@ -1,0 +1,49 @@
+method: bayes  # Bayesian optimization
+metric:
+  name: Reward/Eval
+  goal: maximize
+parameters:
+  env_name:
+    values: ["ALE/Pong-v5"]
+  num_episodes:
+    values: [100000]
+  num_envs:
+    values: [16]
+  batch_size:
+    values: [64]
+  learning_rate:
+    distribution: log_uniform
+    min: 1e-5
+    max: 1e-3
+  gamma:
+    distribution: uniform
+    min: 0.9
+    max: 0.99
+  target_update_freq:
+    values: [19200]
+  memory_size:
+    values: [100000]
+  epsilon_start:
+    values: [1.0]
+  epsilon_end:
+    values: [0.1]
+  epsilon_decay:
+    distribution: log_uniform
+    min: 1e-6
+    max: 1e-4
+  frame_skip:
+    values: [4]
+  eval_interval:
+    values: [10000]
+  num_eval_episodes:
+    values: [10]
+  eps_eval:
+    values: [0.05]
+early_terminate:
+  type: hyperband
+  max_iter: 9
+  eta: 3
+  s_max: 2
+  metric: Reward/Eval
+  grace_period: 1
+  reduction_factor: 3

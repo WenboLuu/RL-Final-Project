@@ -4,55 +4,35 @@ import torch
 from agent import DDQNAgent
 from utils import to_tensor_preprocess_frames, evaluate_agent
 from wandb_logger import initialize_wandb, log_metrics, finalize_wandb  # Import wandb_logger
+import wandb
 
 # Register ALE (Atari Learning Environment) environments
 gym.register_envs(ale_py)
 
-# Hyperparameters
-# ENV_NAME = "ALE/BattleZone-v5"
-ENV_NAME = "ALE/Pong-v5"
-
-MAX_EPISODE_STEPS = 1_000
-NUM_ENVS = 16
-NUM_EPISODES = 1_000
-BATCH_SIZE = 32
-LEARNING_RATE = 1e-4
-GAMMA = 0.99
-TARGET_UPDATE_FREQ = NUM_ENVS * 250
-MEMORY_SIZE = 200_000
-MIN_REPLAY_SIZE = 1000
-EPS_START = 1.0
-EPS_END = 0.1
-EPS_DECAY = (EPS_START - EPS_END) / (NUM_EPISODES * MAX_EPISODE_STEPS)
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-FRAME_SKIP = 4
-EVAL_INTERVAL = NUM_ENVS * 500  # Evaluate every 10,000 steps
-NUM_EVAL_EPISODES = 10
-EPS_EVAL = 0.05
-
 
 def main():
     # Initialize Weights & Biases using wandb_logger
-    config = {
-        "env_name": ENV_NAME,
-        "max_episode_steps": MAX_EPISODE_STEPS,
-        "num_envs": NUM_ENVS,
-        "num_episodes": NUM_EPISODES,
-        "batch_size": BATCH_SIZE,
-        "learning_rate": LEARNING_RATE,
-        "gamma": GAMMA,
-        "target_update_freq": TARGET_UPDATE_FREQ,
-        "memory_size": MEMORY_SIZE,
-        "min_replay_size": MIN_REPLAY_SIZE,
-        "epsilon_start": EPS_START,
-        "epsilon_end": EPS_END,
-        "epsilon_decay": EPS_DECAY,
-        "device": str(DEVICE),
-        "frame_skip": FRAME_SKIP,
-        "eval_interval": EVAL_INTERVAL,
-        "num_eval_episodes": NUM_EVAL_EPISODES,
-        "epsilon_eval": EPS_EVAL,
-    }
+    config = wandb.config
+
+    ENV_NAME = config.env_name
+    MAX_EPISODE_STEPS = 1000
+    NUM_EPISODES = config.num_episodes
+    NUM_ENVS = config.num_envs
+    BATCH_SIZE = config.batch_size
+    LEARNING_RATE = config.learning_rate
+    GAMMA = config.gamma
+    TARGET_UPDATE_FREQ = config.target_update_freq
+    MEMORY_SIZE = config.memory_size
+    MIN_REPLAY_SIZE = config.memory_size
+    EPS_START = config.epsilon_start
+    EPS_END = config.epsilon_end
+    EPS_DECAY = config.epsilon_decay
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    FRAME_SKIP = config.frame_skip
+    EVAL_INTERVAL = config.eval_interval
+    NUM_EVAL_EPISODES = config.num_eval_episodes
+    EPS_EVAL = config.eps_eval
+
     initialize_wandb(project_name="RL-Final-Project", config=config)
 
     # Create vectorized environments
@@ -135,7 +115,7 @@ def main():
         for idx in range(NUM_ENVS):
             if dones[idx]:
                 # Log episode reward for completed episodes
-                log_metrics({"Reward/Episode": episode_reward[idx].item()}, step=global_step)
+                log_metrics({"Reward/Train": episode_reward[idx].item()}, step=global_step)
                 if episode_count % 100 == 0:
                     print(f"Episode {episode_count} Reward: {episode_reward[idx].item()}")
                 # Increment episode count and reset the reward for this environment

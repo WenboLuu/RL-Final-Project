@@ -5,22 +5,16 @@ from IPython import display
 from constants import DTYPE_STATE
 
 
-def to_tensor_preprocess_frames(frames, device="cpu", mode="grayscale"):
-    """
-    Preprocesses a list of frames by converting each frame to the specified mode,
-    resizing it to 84x84, and converting it to a PyTorch tensor.
-
-    Parameters:
-    - frames: A list of input frames in RGB format.
-    - mode: 'grayscale' or 'rgb' for preprocessing.
-
-    Returns:
-    - A list of preprocessed frames as PyTorch tensors.
-    """
-    preprocessed_tensor_frames = [
-        torch.tensor(preprocess_frame(frame, mode=mode), device=device, dtype=DTYPE_STATE) for frame in frames
-    ]
-    return preprocessed_tensor_frames
+def stack_preprocess_frames(frames, device="cpu", mode="grayscale"):
+    frames = [torch.tensor(preprocess_frame(frame, mode=mode), device=device, dtype=DTYPE_STATE) for frame in frames]
+    stacked_frames_tensor = torch.stack(frames)
+    if mode == "grayscale":
+        stacked_frames_tensor = stacked_frames_tensor.unsqueeze(1)  # Add channel dimension for grayscale
+    elif mode == "rgb":
+        stacked_frames_tensor = stacked_frames_tensor.permute(0, 3, 1, 2).contiguous()  # Rearrange dimensions for RGB
+    else:
+        raise ValueError("Invalid mode: choose 'grayscale' or 'rgb'")
+    return stacked_frames_tensor
 
 
 def preprocess_frame(frame, mode="grayscale"):
@@ -39,7 +33,6 @@ def preprocess_frame(frame, mode="grayscale"):
         frame = cv2.resize(frame, (84, 84))
     elif mode == "rgb":
         frame = cv2.resize(frame, (84, 84))
-        # Ensure the frame has the correct channel order (if needed)
     else:
         raise ValueError("Invalid mode: choose 'grayscale' or 'rgb'")
     return frame
@@ -111,7 +104,7 @@ def play_and_render_episode(env, agent):
     env.close()
 
 
-def evaluate_agent(env, agent, num_episodes=5, epsilon=0.05, device="cpu"):
+def evaluate_agent(env, agent, num_episodes=5, epsilon=0.05, input_mode="grayscale", device="cpu"):
     """
     Evaluates the agent over a specified number of episodes.
     """
@@ -123,8 +116,8 @@ def evaluate_agent(env, agent, num_episodes=5, epsilon=0.05, device="cpu"):
         total_reward = 0
 
         # Preprocess initial state
-        state_frame = to_tensor_preprocess_frames([state], device=device)[0]  # Shape: [84, 84]
-        state_stack = state_frame.unsqueeze(0).unsqueeze(0)  # Shape: [1, 1, 84, 84]
+        state_stack = stack_preprocess_frames([state], device=device, mode=input_mode)[0]  # Shape: [1, 84, 84]
+        state_stack = state_stack.unsqueeze(0)  # Shape: [1, 1, 84, 84]
 
         while not terminated and not truncated:
             # Agent selects an action
@@ -136,8 +129,8 @@ def evaluate_agent(env, agent, num_episodes=5, epsilon=0.05, device="cpu"):
             total_reward += reward
 
             # Preprocess next state
-            next_state_frame = to_tensor_preprocess_frames([next_state], device=device)[0]
-            state_stack = next_state_frame.unsqueeze(0).unsqueeze(0)  # Shape: [1, 1, 84, 84]
+            next_state_stack = stack_preprocess_frames([state], device=device, mode=input_mode)[0]
+            state_stack = next_state_stack.unsqueeze(0)
 
         total_rewards.append(total_reward)
 

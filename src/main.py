@@ -7,7 +7,7 @@ import ale_py
 import wandb
 
 from agent import DDQNAgent
-from utils import to_tensor_preprocess_frames, evaluate_agent
+from utils import stack_preprocess_frames, evaluate_agent
 
 from wandb_logger import initialize_wandb, log_metrics, finalize_wandb  # Import wandb_logger
 
@@ -80,8 +80,7 @@ def main():
 
     # Initialize replay memory
     init_states = envs.reset(seed=42)[0]
-    init_frames = to_tensor_preprocess_frames(init_states, device=DEVICE, mode=INPUT_MODE)
-    state_stack = torch.stack(init_frames).unsqueeze(1)
+    state_stack = stack_preprocess_frames(init_states, device=DEVICE, mode=INPUT_MODE)
 
     episode_count = 0  # Initialize episode counter
     episode_reward = torch.zeros(NUM_ENVS, device=DEVICE)
@@ -93,8 +92,7 @@ def main():
         dones = [t or tr for t, tr in zip(terminated, truncated)]
 
         # Preprocess frames
-        next_frames = to_tensor_preprocess_frames(next_states, device=DEVICE, mode=INPUT_MODE)
-        next_state_stack = torch.stack(next_frames).unsqueeze(1)
+        next_state_stack = stack_preprocess_frames(next_states, device=DEVICE, mode=INPUT_MODE)
 
         # Store transitions in replay buffer without for loop
         agent.replay_buffer.push(state_stack, actions, rewards, next_state_stack, dones)
@@ -124,6 +122,7 @@ def main():
                 agent,
                 num_episodes=NUM_EVAL_EPISODES,
                 epsilon=EPS_EVAL,
+                input_mode=INPUT_MODE,
                 device=DEVICE,
             )
             log_metrics({"Reward/Eval": avg_reward}, step=global_step)

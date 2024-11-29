@@ -31,5 +31,5 @@ class DQN(nn.Module):
     def forward(self, x):
         x = x / 255.0  # Normalize pixel values to [0, 1]
         x = self.conv(x)
-        x = x.view(x.size(0), -1)
+        x = x.reshape(x.size(0), -1)
         return self.fc(x)

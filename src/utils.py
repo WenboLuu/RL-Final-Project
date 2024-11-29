@@ -5,35 +5,43 @@ from IPython import display
 from constants import DTYPE_STATE
 
 
-def to_tensor_preprocess_frames(frames, device="cpu"):
+def to_tensor_preprocess_frames(frames, device="cpu", mode="grayscale"):
     """
-    Preprocesses a list of frames by converting each frame to grayscale, resizing it to 84x84,
-    and converting it to a PyTorch tensor.
+    Preprocesses a list of frames by converting each frame to the specified mode,
+    resizing it to 84x84, and converting it to a PyTorch tensor.
 
     Parameters:
     - frames: A list of input frames in RGB format.
+    - mode: 'grayscale' or 'rgb' for preprocessing.
 
     Returns:
     - A list of preprocessed frames as PyTorch tensors.
     """
     preprocessed_tensor_frames = [
-        torch.tensor(preprocess_frame(frame), device=device, dtype=DTYPE_STATE) for frame in frames
+        torch.tensor(preprocess_frame(frame, mode=mode), device=device, dtype=DTYPE_STATE) for frame in frames
     ]
     return preprocessed_tensor_frames
 
 
-def preprocess_frame(frame):
+def preprocess_frame(frame, mode="grayscale"):
     """
-    Preprocesses a given frame by converting it to grayscale and resizing it to 84x84.
+    Preprocesses a given frame by converting it to the specified mode and resizing it to 84x84.
 
     Parameters:
     - frame: The input frame in RGB format.
+    - mode: 'grayscale' or 'rgb'.
 
     Returns:
-    - The preprocessed frame in grayscale and resized to 84x84.
+    - The preprocessed frame.
     """
-    frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-    frame = cv2.resize(frame, (84, 84))
+    if mode == "grayscale":
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+        frame = cv2.resize(frame, (84, 84))
+    elif mode == "rgb":
+        frame = cv2.resize(frame, (84, 84))
+        # Ensure the frame has the correct channel order (if needed)
+    else:
+        raise ValueError("Invalid mode: choose 'grayscale' or 'rgb'")
     return frame
 
 

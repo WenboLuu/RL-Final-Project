@@ -3,7 +3,7 @@ import yaml
 from main import main
 
 # Load the sweep configuration from the YAML file
-with open("/scratch/wl2707/research/RL/RL-Final-Project/sweep_config.yaml") as file:
+with open("../sweep_config.yaml") as file:
     sweep_config = yaml.safe_load(file)
 
 # Initialize the sweep

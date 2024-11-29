@@ -56,3 +56,9 @@ class DDQNAgent:
 
     def update_target_network(self):
         self.target_net.load_state_dict(self.policy_net.state_dict())
+
+    def save_checkpoint(self, filename):
+        """
+        Saves the current policy network state dictionary to a file.
+        """
+        torch.save(self.policy_net.state_dict(), filename)

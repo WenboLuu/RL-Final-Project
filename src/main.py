@@ -1,10 +1,15 @@
+import os
+import time
+import torch
+
 import gymnasium as gym
 import ale_py
-import torch
+import wandb
+
 from agent import DDQNAgent
 from utils import to_tensor_preprocess_frames, evaluate_agent
+
 from wandb_logger import initialize_wandb, log_metrics, finalize_wandb  # Import wandb_logger
-import wandb
 
 # Register ALE (Atari Learning Environment) environments
 gym.register_envs(ale_py)
@@ -23,16 +28,19 @@ def main():
     GAMMA = config.gamma
     TARGET_UPDATE_FREQ = config.target_update_freq
     MEMORY_SIZE = config.memory_size
-    MIN_REPLAY_SIZE = config.memory_size
+    MIN_REPLAY_SIZE = int(0.1 * MEMORY_SIZE)
     EPS_START = config.epsilon_start
     EPS_END = config.epsilon_end
-    EPS_DECAY = config.epsilon_decay
-    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    EPS_DECAY = float(config.epsilon_decay)  # Ensure EPS_DECAY is a float
+    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     FRAME_SKIP = config.frame_skip
     EVAL_INTERVAL = config.eval_interval
     NUM_EVAL_EPISODES = config.num_eval_episodes
     EPS_EVAL = config.eps_eval
-
+    INPUT_MODE = config.input_mode  # Add input_mode to configurations
+    
+    checkpoint_path = f"../checkpoints/{ENV_NAME.replace('/', '-')}"
+    os.makedirs(checkpoint_path, exist_ok=True)
     initialize_wandb(project_name="RL-Final-Project", config=config)
 
     # Create vectorized environments
@@ -45,8 +53,16 @@ def main():
     obs_space = envs.single_observation_space
     action_space = envs.single_action_space.n
 
+    # Adjust state shape based on input mode
+    if INPUT_MODE == 'grayscale':
+        state_channels = 1
+    elif INPUT_MODE == 'rgb':
+        state_channels = 3
+    else:
+        raise ValueError("Invalid input_mode: choose 'grayscale' or 'rgb'")
+
     agent = DDQNAgent(
-        state_shape=(1, 84, 84),
+        state_shape=(state_channels, 84, 84),
         n_actions=action_space,
         batch_size=BATCH_SIZE,
         lr=LEARNING_RATE,
@@ -64,7 +80,7 @@ def main():
 
     # Initialize replay memory
     init_states = envs.reset(seed=42)[0]
-    init_frames = to_tensor_preprocess_frames(init_states, device=DEVICE)
+    init_frames = to_tensor_preprocess_frames(init_states, device=DEVICE, mode=INPUT_MODE)
     state_stack = torch.stack(init_frames).unsqueeze(1)
 
     episode_count = 0  # Initialize episode counter
@@ -77,7 +93,7 @@ def main():
         dones = [t or tr for t, tr in zip(terminated, truncated)]
 
         # Preprocess frames
-        next_frames = to_tensor_preprocess_frames(next_states, device=DEVICE)
+        next_frames = to_tensor_preprocess_frames(next_states, device=DEVICE, mode=INPUT_MODE)
         next_state_stack = torch.stack(next_frames).unsqueeze(1)
 
         # Store transitions in replay buffer without for loop
@@ -99,6 +115,7 @@ def main():
         # Update target network
         if global_step % TARGET_UPDATE_FREQ == 0:
             agent.update_target_network()
+            # print(f"Target network updated at step {global_step}")
 
         # Evaluate the agent at intervals
         if global_step % EVAL_INTERVAL == 0:
@@ -111,6 +128,11 @@ def main():
             )
             log_metrics({"Reward/Eval": avg_reward}, step=global_step)
             print(f"Evaluation at step {global_step}: Average Reward: {avg_reward}")
+        
+        if episode_count % (NUM_EPISODES // 10) == 1:
+            current_time = time.strftime("%Y%m%d-%H%M%S")
+            checkpoint_filename = f"{checkpoint_path}/{current_time}_episode_{episode_count}.pth"
+            agent.save_checkpoint(checkpoint_filename)
 
         for idx in range(NUM_ENVS):
             if dones[idx]:
@@ -122,6 +144,9 @@ def main():
                 episode_count += 1
                 episode_reward[idx] = 0
 
+    checkpoint_filename = f"{checkpoint_path}/{current_time}_final_model.pth"
+    agent.save_checkpoint(checkpoint_filename)
+    
     envs.close()
     eval_env.close()
     finalize_wandb()  # Finalize Weights & Biases run

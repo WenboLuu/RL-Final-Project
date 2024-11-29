@@ -4,13 +4,17 @@ metric:
   goal: maximize
 parameters:
   env_name:
-    values: ["ALE/Pong-v5"]
-  num_episodes:
-    values: [3000]
+    values: ["ALE/Alien-v5"]
+  max_episode_steps:
+    distribution: int_uniform
+    min: 500
+    max: 2000
+  num_training_steps:
+    values: [2e6]
   num_envs:
-    values: [16]
+    values: [5, 10, 20]
   batch_size:
-    values: [32]
+    values: [16, 32, 64]
   learning_rate:
     distribution: uniform
     min: 1e-5
@@ -18,13 +22,17 @@ parameters:
   gamma:
     values: [0.99]
   target_update_freq:
-    values: [2400, 4800, 9600]
+    distribution: int_uniform
+    min: 2000
+    max: 20000
   memory_size:
     values: [200000]
   epsilon_start:
     values: [1.0]
   epsilon_end:
-    values: [0.1]
+    distribution: uniform
+    min: 0.01
+    max: 0.25
   epsilon_decay:
     distribution: uniform
     min: 1e-6
@@ -34,14 +42,10 @@ parameters:
   eval_interval:
     values: [10000]
   num_eval_episodes:
-    values: [10]
+    distribution: int_uniform
+    min: 1
+    max: 20
   eps_eval:
     values: [0.05]
-early_terminate:
-  type: hyperband
-  max_iter: 30
-  eta: 3
-  s_max: 3
-  metric: Reward/Eval
-  grace_period: 1
-  reduction_factor: 3
+  input_mode:
+    values: ["rgb", "grayscale"]

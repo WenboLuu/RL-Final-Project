@@ -18,10 +18,9 @@ gym.register_envs(ale_py)
 def main():
     # Initialize Weights & Biases using wandb_logger
     config = wandb.config
-
     ENV_NAME = config.env_name
-    MAX_EPISODE_STEPS = 1000
-    NUM_EPISODES = config.num_episodes
+    MAX_EPISODE_STEPS = config.max_episode_steps
+    NUM_TRAINING_STEPS = config.num_training_steps
     NUM_ENVS = config.num_envs
     BATCH_SIZE = config.batch_size
     LEARNING_RATE = config.learning_rate
@@ -31,7 +30,7 @@ def main():
     MIN_REPLAY_SIZE = int(0.1 * MEMORY_SIZE)
     EPS_START = config.epsilon_start
     EPS_END = config.epsilon_end
-    EPS_DECAY = float(config.epsilon_decay)  # Ensure EPS_DECAY is a float
+    EPS_DECAY = config.epsilon_decay  
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     FRAME_SKIP = config.frame_skip
     EVAL_INTERVAL = config.eval_interval
@@ -85,7 +84,7 @@ def main():
     episode_count = 0  # Initialize episode counter
     episode_reward = torch.zeros(NUM_ENVS, device=DEVICE)
 
-    while episode_count < NUM_EPISODES:
+    while global_step < NUM_TRAINING_STEPS:
         # Epsilon-greedy action selection
         actions = agent.select_action(state_stack, epsilon)
         next_states, rewards, terminated, truncated, infos = envs.step(actions)
@@ -128,10 +127,10 @@ def main():
             log_metrics({"Reward/Eval": avg_reward}, step=global_step)
             print(f"Evaluation at step {global_step}: Average Reward: {avg_reward}")
         
-        if episode_count % (NUM_EPISODES // 10) == 1:
-            current_time = time.strftime("%Y%m%d-%H%M%S")
-            checkpoint_filename = f"{checkpoint_path}/{current_time}_episode_{episode_count}.pth"
-            agent.save_checkpoint(checkpoint_filename)
+        # if global_step % 500_000 == 0:
+        #     current_time = time.strftime("%Y%m%d-%H%M%S")
+        #     checkpoint_filename = f"{checkpoint_path}/{current_time}_episode_{episode_count}.pth"
+        #     agent.save_checkpoint(checkpoint_filename)
 
         for idx in range(NUM_ENVS):
             if dones[idx]:
@@ -143,8 +142,8 @@ def main():
                 episode_count += 1
                 episode_reward[idx] = 0
 
-    checkpoint_filename = f"{checkpoint_path}/{current_time}_final_model.pth"
-    agent.save_checkpoint(checkpoint_filename)
+    # checkpoint_filename = f"{checkpoint_path}/{current_time}_final_model.pth"
+    # agent.save_checkpoint(checkpoint_filename)
     
     envs.close()
     eval_env.close()

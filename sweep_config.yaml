@@ -4,7 +4,7 @@ metric:
   goal: maximize
 parameters:
   env_name:
-    values: ["ALE/Alien-v5"]
+    values: ["ALE/Pong-v5"]
   max_episode_steps:
     distribution: int_uniform
     min: 500

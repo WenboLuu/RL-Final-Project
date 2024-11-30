@@ -1,5 +1,6 @@
 env_name: 'ALE/Alien-v5'
-num_episodes: 50000
+max_episode_steps: 2000
+num_training_steps: 2.0e+8
 num_envs: 16
 batch_size: 32
 learning_rate: 0.00025

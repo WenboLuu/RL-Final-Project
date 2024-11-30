@@ -87,7 +87,7 @@ def main():
     WAIT = 1
     WARMUP = 500
     ACTIVE = 10
-    REPEAT = 3
+    REPEAT = 1
     
     with torch.profiler.profile(
         schedule=torch.profiler.schedule(wait=WAIT, warmup=WARMUP, active=ACTIVE, repeat=REPEAT),

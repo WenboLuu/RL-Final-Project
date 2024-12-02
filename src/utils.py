@@ -6,7 +6,7 @@ import torchvision.transforms as T
 from IPython import display
 
 
-def stack_preprocess_frames_new(frames, device="cpu", mode="grayscale"):
+def stack_preprocess_frames(frames, device="cpu", mode="grayscale"):
     """
     Efficiently preprocesses and stacks frames using torchvision transforms.
 

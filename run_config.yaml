@@ -1,6 +1,6 @@
 env_name: 'ALE/Alien-v5'
-max_train_episode_steps: 2000
-max_eval_episode_steps: None
+train_max_episode_steps: 2000
+eval_max_episode_steps: null
 model: 'DQN'
 num_training_steps: 2.0e+8
 num_envs: 16
@@ -16,4 +16,4 @@ frame_skip: 4
 eval_interval: 20000
 num_eval_episodes: 10
 eps_eval: 0.00
-input_mode: 'grey'  # Use 'rgb' to process RGB frames, 'grayscale' to process grayscale frames
+input_mode: 'grayscale'  # Use 'rgb' to process RGB frames, 'grayscale' to process grayscale frames

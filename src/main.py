@@ -19,7 +19,7 @@ def main():
     # Initialize Weights & Biases using wandb_logger
     config = wandb.config
     ENV_NAME = config.env_name
-    MAX_TRAIN_EPISODE_STEPS = config.max_train_episode_steps
+    MAX_TRAIN_EPISODE_STEPS = config.train_max_episode_steps
     NUM_TRAINING_STEPS = config.num_training_steps
     NUM_ENVS = config.num_envs
     BATCH_SIZE = config.batch_size
@@ -30,7 +30,7 @@ def main():
     MIN_REPLAY_SIZE = int(0.1 * MEMORY_SIZE)
     EPS_START = config.epsilon_start
     EPS_END = config.epsilon_end
-    EPS_DECAY = config.epsilon_decay  
+    EPS_DECAY = config.epsilon_decay
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     FRAME_SKIP = config.frame_skip
     EVAL_INTERVAL = config.eval_interval
@@ -38,7 +38,7 @@ def main():
     EPS_EVAL = config.eps_eval
     INPUT_MODE = config.input_mode  # Add input_mode to configurations
     EVAL_MAX_EPISODE_STEPS = config.eval_max_episode_steps
-    
+
     checkpoint_path = f"../checkpoints/{ENV_NAME.replace('/', '-')}"
     os.makedirs(checkpoint_path, exist_ok=True)
     initialize_wandb(project_name="RL-Final-Project", config=config)
@@ -54,9 +54,9 @@ def main():
     action_space = envs.single_action_space.n
 
     # Adjust state shape based on input mode
-    if INPUT_MODE == 'grayscale':
+    if INPUT_MODE == "grayscale":
         state_channels = 1
-    elif INPUT_MODE == 'rgb':
+    elif INPUT_MODE == "rgb":
         state_channels = 3
     else:
         raise ValueError("Invalid input_mode: choose 'grayscale' or 'rgb'")
@@ -76,7 +76,10 @@ def main():
     epsilon = EPS_START
 
     # Create evaluation environment
-    eval_env = gym.make(ENV_NAME, max_episode_steps=EVAL_MAX_EPISODE_STEPS, frameskip=FRAME_SKIP)
+    if EVAL_MAX_EPISODE_STEPS is None:
+        eval_env = gym.make(ENV_NAME, frameskip=FRAME_SKIP)
+    else:
+        eval_env = gym.make(ENV_NAME, max_episode_steps=EVAL_MAX_EPISODE_STEPS, frameskip=FRAME_SKIP)
 
     # Initialize replay memory
     init_states = envs.reset(seed=42)[0]
@@ -127,7 +130,7 @@ def main():
             )
             log_metrics({"Reward/Eval": avg_reward}, step=global_step)
             print(f"Evaluation at step {global_step}: Average Reward: {avg_reward}")
-        
+
         # if global_step % 500_000 == 0:
         #     current_time = time.strftime("%Y%m%d-%H%M%S")
         #     checkpoint_filename = f"{checkpoint_path}/{current_time}_episode_{episode_count}.pth"
@@ -145,7 +148,7 @@ def main():
 
     # checkpoint_filename = f"{checkpoint_path}/{current_time}_final_model.pth"
     # agent.save_checkpoint(checkpoint_filename)
-    
+
     envs.close()
     eval_env.close()
     finalize_wandb()  # Finalize Weights & Biases run

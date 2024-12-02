@@ -13,5 +13,5 @@ epsilon_decay: 1.0e-6  # Ensure this is interpreted as a float
 frame_skip: 4
 eval_interval: 20000
 num_eval_episodes: 10
-eps_eval: 0.05
-input_mode: 'rgb'  # Use 'rgb' to process RGB frames, 'grayscale' to process grayscale frames
+eps_eval: 0.00
+input_mode: 'grey'  # Use 'rgb' to process RGB frames, 'grayscale' to process grayscale frames

@@ -1,41 +1,38 @@
-import cv2
-import matplotlib.pyplot as plt
 import torch
+import numpy as np
+import matplotlib.pyplot as plt
+import torchvision.transforms as T
+
 from IPython import display
-from constants import DTYPE_STATE
 
 
-def stack_preprocess_frames(frames, device="cpu", mode="grayscale"):
-    frames = [torch.tensor(preprocess_frame(frame, mode=mode), device=device, dtype=DTYPE_STATE) for frame in frames]
-    stacked_frames_tensor = torch.stack(frames)
-    if mode == "grayscale":
-        stacked_frames_tensor = stacked_frames_tensor.unsqueeze(1)  # Add channel dimension for grayscale
-    elif mode == "rgb":
-        stacked_frames_tensor = stacked_frames_tensor.permute(0, 3, 1, 2).contiguous()  # Rearrange dimensions for RGB
-    else:
-        raise ValueError("Invalid mode: choose 'grayscale' or 'rgb'")
-    return stacked_frames_tensor
-
-
-def preprocess_frame(frame, mode="grayscale"):
+def stack_preprocess_frames_new(frames, device="cpu", mode="grayscale"):
     """
-    Preprocesses a given frame by converting it to the specified mode and resizing it to 84x84.
+    Efficiently preprocesses and stacks frames using torchvision transforms.
 
     Parameters:
-    - frame: The input frame in RGB format.
+    - frames: List of input frames in RGB format (as NumPy arrays or equivalent).
+    - device: The device to place the tensors on ('cpu' or 'cuda').
     - mode: 'grayscale' or 'rgb'.
+    - dtype: The desired output data type (default: uint8 for image data).
 
     Returns:
-    - The preprocessed frame.
+    - A tensor of preprocessed frames with the specified dtype.
     """
+    # Define transformations
     if mode == "grayscale":
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-        frame = cv2.resize(frame, (84, 84))
+        transform = T.Compose([T.Resize((84, 84)), T.Grayscale(num_output_channels=1)])
     elif mode == "rgb":
-        frame = cv2.resize(frame, (84, 84))
+        transform = T.Compose([T.Resize((84, 84))])
     else:
         raise ValueError("Invalid mode: choose 'grayscale' or 'rgb'")
-    return frame
+
+    # Apply transformations to all frames and stack them
+    frames = np.stack(frames)
+    frames_tensor = torch.from_numpy(frames).to(device).permute(0, 3, 1, 2)
+    frames_tensor = transform(frames_tensor)
+
+    return frames_tensor
 
 
 def play_and_render_episode(env, agent):

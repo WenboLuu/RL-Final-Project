@@ -1,5 +1,7 @@
 env_name: 'ALE/Alien-v5'
-max_episode_steps: 2000
+max_train_episode_steps: 2000
+max_eval_episode_steps: None
+model: 'DQN'
 num_training_steps: 2.0e+8
 num_envs: 16
 batch_size: 32

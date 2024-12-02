@@ -19,7 +19,7 @@ def main():
     # Initialize Weights & Biases using wandb_logger
     config = wandb.config
     ENV_NAME = config.env_name
-    MAX_EPISODE_STEPS = config.max_episode_steps
+    MAX_TRAIN_EPISODE_STEPS = config.max_train_episode_steps
     NUM_TRAINING_STEPS = config.num_training_steps
     NUM_ENVS = config.num_envs
     BATCH_SIZE = config.batch_size
@@ -37,6 +37,7 @@ def main():
     NUM_EVAL_EPISODES = config.num_eval_episodes
     EPS_EVAL = config.eps_eval
     INPUT_MODE = config.input_mode  # Add input_mode to configurations
+    EVAL_MAX_EPISODE_STEPS = config.eval_max_episode_steps
     
     checkpoint_path = f"../checkpoints/{ENV_NAME.replace('/', '-')}"
     os.makedirs(checkpoint_path, exist_ok=True)
@@ -45,7 +46,7 @@ def main():
     # Create vectorized environments
     envs = gym.vector.AsyncVectorEnv(
         [
-            lambda: gym.make(ENV_NAME, max_episode_steps=MAX_EPISODE_STEPS, frameskip=FRAME_SKIP)
+            lambda: gym.make(ENV_NAME, max_episode_steps=MAX_TRAIN_EPISODE_STEPS, frameskip=FRAME_SKIP)
             for _ in range(NUM_ENVS)
         ]
     )
@@ -75,7 +76,7 @@ def main():
     epsilon = EPS_START
 
     # Create evaluation environment
-    eval_env = gym.make(ENV_NAME)
+    eval_env = gym.make(ENV_NAME, max_episode_steps=EVAL_MAX_EPISODE_STEPS, frameskip=FRAME_SKIP)
 
     # Initialize replay memory
     init_states = envs.reset(seed=42)[0]

@@ -2,24 +2,60 @@ import os
 import time
 import torch
 
+import random
+import numpy as np
+
 import gymnasium as gym
 import ale_py
 import wandb
 
-from agent import DDQNAgent
+from agent import DQNAgent
 from utils import stack_preprocess_frames, evaluate_agent
 
 from wandb_logger import initialize_wandb, log_metrics, finalize_wandb  # Import wandb_logger
 
+import hashlib  # Add this import if not already present
+
 # Register ALE (Atari Learning Environment) environments
 gym.register_envs(ale_py)
 
+def generate_group_name(config):
+    # Exclude parameters that vary between runs, like 'seed'
+    hyperparams = [(key, config[key]) for key in sorted(config.keys()) if key != 'seed']
+    hyperparams_str = str(hyperparams)
+    # Generate a hash to create a unique group name
+    group_name = hashlib.md5(hyperparams_str.encode('utf-8')).hexdigest()
+    return group_name
 
-def main():
+def main(seed):
+    # Set random seeds for reproducibility
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+
+    # If using CUDA
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+
     # Initialize Weights & Biases using wandb_logger
     config = wandb.config
+    initialize_wandb(project_name="RL-Final-Project", config=config)
+
+    # Generate group_name and add it as a tag
+    group_name = generate_group_name(config)
+    wandb.run.tags = wandb.run.tags + (group_name,)
+
+    # Optionally, set a run name that includes the seed
+    wandb.run.name = f"run_{wandb.run.id}_seed_{seed}"
+
+    # Rest of your code
+    # Extract configuration parameters
     ENV_NAME = config.env_name
-    MAX_TRAIN_EPISODE_STEPS = config.train_max_episode_steps
+    MAX_TRAIN_EPISODE_STEPS = config.max_episode_steps
     NUM_TRAINING_STEPS = config.num_training_steps
     NUM_ENVS = config.num_envs
     BATCH_SIZE = config.batch_size
@@ -41,7 +77,6 @@ def main():
 
     checkpoint_path = f"../checkpoints/{ENV_NAME.replace('/', '-')}"
     os.makedirs(checkpoint_path, exist_ok=True)
-    initialize_wandb(project_name="RL-Final-Project", config=config)
 
     # Create vectorized environments
     envs = gym.vector.AsyncVectorEnv(
@@ -61,7 +96,7 @@ def main():
     else:
         raise ValueError("Invalid input_mode: choose 'grayscale' or 'rgb'")
 
-    agent = DDQNAgent(
+    agent = DQNAgent(
         state_shape=(state_channels, 84, 84),
         n_actions=action_space,
         batch_size=BATCH_SIZE,
@@ -82,7 +117,7 @@ def main():
         eval_env = gym.make(ENV_NAME, max_episode_steps=EVAL_MAX_EPISODE_STEPS, frameskip=FRAME_SKIP)
 
     # Initialize replay memory
-    init_states = envs.reset(seed=42)[0]
+    init_states = envs.reset(seed=seed)[0]
     state_stack = stack_preprocess_frames(init_states, device=DEVICE, mode=INPUT_MODE)
 
     episode_count = 0  # Initialize episode counter
@@ -97,7 +132,7 @@ def main():
         # Preprocess frames
         next_state_stack = stack_preprocess_frames(next_states, device=DEVICE, mode=INPUT_MODE)
 
-        # Store transitions in replay buffer without for loop
+        # Store transitions in replay buffer
         agent.replay_buffer.push(state_stack, actions, rewards, next_state_stack, dones)
 
         state_stack = next_state_stack
@@ -131,11 +166,6 @@ def main():
             log_metrics({"Reward/Eval": avg_reward}, step=global_step)
             print(f"Evaluation at step {global_step}: Average Reward: {avg_reward}")
 
-        # if global_step % 500_000 == 0:
-        #     current_time = time.strftime("%Y%m%d-%H%M%S")
-        #     checkpoint_filename = f"{checkpoint_path}/{current_time}_episode_{episode_count}.pth"
-        #     agent.save_checkpoint(checkpoint_filename)
-
         for idx in range(NUM_ENVS):
             if dones[idx]:
                 # Log episode reward for completed episodes
@@ -146,13 +176,9 @@ def main():
                 episode_count += 1
                 episode_reward[idx] = 0
 
-    # checkpoint_filename = f"{checkpoint_path}/{current_time}_final_model.pth"
-    # agent.save_checkpoint(checkpoint_filename)
-
     envs.close()
     eval_env.close()
     finalize_wandb()  # Finalize Weights & Biases run
-
 
 if __name__ == "__main__":
     main()

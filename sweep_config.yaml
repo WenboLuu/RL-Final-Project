@@ -3,49 +3,47 @@ metric:
   name: Reward/Eval
   goal: maximize
 parameters:
+  seed:
+    values: [42, 2002, 7777]  # Fixed seeds for reproducibility
   env_name:
-    values: ["ALE/Pong-v5"]
+    values: ["ALE/Asterix-v5"]  # Constant environment
   max_episode_steps:
-    distribution: int_uniform
-    min: 500
-    max: 2000
+    values: [1000]  # Constant value (example, adjust if needed)
   num_training_steps:
-    values: [2e6]
+    values: [3000000]  # Constant training steps
   num_envs:
-    values: [5, 10, 20]
+    values: [16]  # Constant number of environments
   batch_size:
-    values: [16, 32, 64]
+    values: [32]  # Constant batch size
   learning_rate:
-    distribution: uniform
+    distribution: uniform  # Tuning learning rate
     min: 1e-5
     max: 1e-3
   gamma:
-    values: [0.99]
+    values: [0.99]  # Constant gamma
   target_update_freq:
-    distribution: int_uniform
+    distribution: int_uniform  # Tuning update frequency
     min: 2000
     max: 20000
   memory_size:
-    values: [200000]
+    values: [200000]  # Constant memory size
   epsilon_start:
-    values: [1.0]
+    values: [1.0]  # Constant epsilon start
   epsilon_end:
-    distribution: uniform
-    min: 0.01
-    max: 0.25
+    values: [0.01]  # Constant epsilon end
   epsilon_decay:
-    distribution: uniform
+    distribution: uniform  # Tuning epsilon decay
     min: 1e-6
     max: 1e-4
   frame_skip:
-    values: [4]
+    values: [4]  # Constant frame skip
   eval_interval:
-    values: [10000]
+    values: [10000]  # Constant evaluation interval
   num_eval_episodes:
-    distribution: int_uniform
-    min: 1
-    max: 20
+    values: [5]  # Constant evaluation episodes
   eps_eval:
-    values: [0.05]
+    values: [0.05]  # Constant evaluation epsilon
   input_mode:
-    values: ["rgb", "grayscale"]
+    values: ["rgb", "grayscale"]  # Tuning input mode
+  eval_max_episode_steps:
+    values: [10000]  # Constant max evaluation steps

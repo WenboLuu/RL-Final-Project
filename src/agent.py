@@ -120,6 +120,7 @@ class DDQNAgent:
         if random.random() > epsilon:
             with torch.no_grad():
                 q_values = self.policy_net(state)
+                print("max Q values are: ", q_values)
                 action = q_values.max(1)[1].cpu().numpy()
         else:
             action = np.random.randint(0, self.n_actions, size=state.shape[0])
@@ -152,3 +153,9 @@ class DDQNAgent:
         Saves the current policy network state dictionary to a file.
         """
         torch.save(self.policy_net.state_dict(), filename)
+
+    def load_checkpoint(self, checkpoint_path):
+        self.target_net.load_state_dict(torch.load(checkpoint_path, map_location=self.device))
+        self.policy_net.load_state_dict(torch.load(checkpoint_path, map_location=self.device))
+        self.policy_net.eval()
+        self.target_net.eval()

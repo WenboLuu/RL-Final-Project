@@ -126,7 +126,7 @@ def evaluate_agent(env, agent, num_episodes=5, epsilon=0.05, input_mode="graysca
             total_reward += reward
 
             # Preprocess next state
-            next_state_stack = stack_preprocess_frames([state], device=device, mode=input_mode)[0]
+            next_state_stack = stack_preprocess_frames([next_state], device=device, mode=input_mode)[0]
             state_stack = next_state_stack.unsqueeze(0)
 
         total_rewards.append(total_reward)

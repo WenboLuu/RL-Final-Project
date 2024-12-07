@@ -1,14 +1,14 @@
-env_name: "ALE/Asterix-v5"
+env_name: "ALE/SpaceInvaders-v5"
 train_max_episode_steps: 3000
-eval_max_episode_steps: null
-model: 'DQN'
+eval_max_episode_steps: 5000
+model: 'DDQN'
 num_training_steps: 5.0e+8
 num_envs: 16
 batch_size: 32
 learning_rate: 0.0007379
 gamma: 0.99
-target_update_freq: 12531
 memory_size: 200000
+target_update_freq: 9600
 epsilon_start: 1.0
 epsilon_end: 0.01
 epsilon_decay: 0.00009081571547741002  # Ensure this is interpreted as a float
@@ -17,4 +17,4 @@ eval_interval: 20000
 num_eval_episodes: 10
 eps_eval: 0.00
 input_mode: 'grayscale'  # Use 'rgb' to process RGB frames, 'grayscale' to process grayscale frames
-seed: 864
+seed: 3407

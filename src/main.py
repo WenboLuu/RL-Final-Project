@@ -9,7 +9,7 @@ import gymnasium as gym
 import ale_py
 import wandb
 
-from agent import DQNAgent
+from agent import DDQNAgent
 from utils import stack_preprocess_frames, evaluate_agent
 
 from wandb_logger import initialize_wandb, log_metrics, finalize_wandb  # Import wandb_logger
@@ -96,7 +96,7 @@ def main(seed):
     else:
         raise ValueError("Invalid input_mode: choose 'grayscale' or 'rgb'")
 
-    agent = DQNAgent(
+    agent = DDQNAgent(
         state_shape=(state_channels, 84, 84),
         n_actions=action_space,
         batch_size=BATCH_SIZE,
@@ -106,6 +106,8 @@ def main(seed):
         memory_size=MEMORY_SIZE,
         device=DEVICE,
     )
+    
+    print("n actions: ", agent.n_actions)
 
     global_step = 0
     epsilon = EPS_START
@@ -122,11 +124,26 @@ def main(seed):
 
     episode_count = 0  # Initialize episode counter
     episode_reward = torch.zeros(NUM_ENVS, device=DEVICE)
+    
+    # last_states = None
 
     while global_step < NUM_TRAINING_STEPS:
         # Epsilon-greedy action selection
         actions = agent.select_action(state_stack, epsilon)
         next_states, rewards, terminated, truncated, infos = envs.step(actions)
+        
+        # print("Next states are: ", next_states, " and the rewards are: ", rewards)
+        # if last_states is not None and np.isclose(last_states, next_states):
+        #     rewards -= 10
+        # last_states = next_states.copy()  # Clone to avoid reference issues
+        
+        
+        # if last_states is not None:
+        #     # Check if each state in the batch is identical to the previous state
+        #     mask = np.array([np.allclose(next_state, last_state) for next_state, last_state in zip(next_states, last_states)])
+        #     rewards -= 0.02 * mask  # Apply penalty where states are identical
+        # last_states = next_states.copy()  # Clone to avoid reference issues
+        
         dones = [t or tr for t, tr in zip(terminated, truncated)]
 
         # Preprocess frames
@@ -149,9 +166,10 @@ def main(seed):
             log_metrics({"Loss/Train": loss}, step=global_step)
 
         # Update target network
+        # print("Global step: ", global_step)
         if global_step % TARGET_UPDATE_FREQ == 0:
             agent.update_target_network()
-            # print(f"Target network updated at step {global_step}")
+            print(f"Target network updated at step {global_step}")
 
         # Evaluate the agent at intervals
         if global_step % EVAL_INTERVAL == 0:
